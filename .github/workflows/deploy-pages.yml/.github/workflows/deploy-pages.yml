@@ -1,0 +1,38 @@
+name: Deploy to Cloudflare Pages (push)
+
+# Push 到 master 即自动部署到 cf-manager Pages 项目（纯代码部署，不碰 D1/KV/密钥）。
+# 需要在 fork 仓库 Settings → Secrets and variables → Actions 里添加：
+#   CLOUDFLARE_API_TOKEN — Cloudflare API Token（需 Pages:Edit 权限）
+# 首次提交本文件时若 Secret 还没加，部署步骤会因缺少凭证失败；加好 Secret 后在 Actions 里 Re-run 即可。
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Install wrangler
+        run: npm install -g wrangler
+
+      - name: Build
+        working-directory: worker
+        run: npm ci && npm run build
+
+      - name: Deploy to Cloudflare Pages
+        working-directory: worker
+        run: wrangler pages deploy --project-name cf-manager --branch main --commit-dirty
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
