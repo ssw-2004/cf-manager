@@ -35,11 +35,16 @@ jobs:
       # `wrangler pages deploy` 会报配置校验错；且 [vars] 里的占位值会覆盖
       # Dashboard 上真正的 API_SECRET / ENCRYPTION_KEY。做法与仓库自带的
       # deploy-cf Action 一致：部署前在 CI 里去掉这两项（只改检出副本，不提交回仓库）。
+      # 另外 wrangler.toml 里的 D1/KV 还是占位符（YOUR_D1_DATABASE_ID /
+      # YOUR_KV_NAMESPACE_ID），发布 Function 时会被校验拒绝；这里填入
+      # cf-manager 项目实际绑定的 D1/KV ID（取自 Dashboard 项目配置，不是密钥）。
       - name: Prepare wrangler.toml for Pages deploy
         working-directory: worker
         run: |
           sed -i '/^main = /d' wrangler.toml
           sed -i '/^\[vars\]/,/^$/d' wrangler.toml
+          sed -i 's/database_id = ".*"/database_id = "81a66f64-0dc1-4b41-b553-93bddaf0a170"/' wrangler.toml
+          sed -i 's/id = "YOUR_KV_NAMESPACE_ID"/id = "409677493a5c4871a6f21695873ea87d"/' wrangler.toml
 
       - name: Deploy to Cloudflare Pages
         working-directory: worker
