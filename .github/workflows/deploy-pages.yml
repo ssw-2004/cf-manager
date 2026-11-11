@@ -46,3 +46,7 @@ jobs:
         run: wrangler pages deploy --project-name cf-manager --branch main --commit-dirty
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # 明确指定帐户 ID，跳过 wrangler 的帐户查找（仅 Pages:Edit 的 Token
+          # 没有列出帐户的权限，查不到帐户 ID 会直接报错）。
+          # 这是 cf-manager Pages 项目所在的帐户（Dashboard URL 里的 account ID），不是密钥。
+          CLOUDFLARE_ACCOUNT_ID: fd02099edc8f06e2147c17c6e17d04c6
