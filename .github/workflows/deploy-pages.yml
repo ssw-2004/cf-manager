@@ -31,6 +31,16 @@ jobs:
         working-directory: worker
         run: npm ci && npm run build
 
+      # wrangler.toml 同时含有 main（Worker 入口）和 pages_build_output_dir 时，
+      # `wrangler pages deploy` 会报配置校验错；且 [vars] 里的占位值会覆盖
+      # Dashboard 上真正的 API_SECRET / ENCRYPTION_KEY。做法与仓库自带的
+      # deploy-cf Action 一致：部署前在 CI 里去掉这两项（只改检出副本，不提交回仓库）。
+      - name: Prepare wrangler.toml for Pages deploy
+        working-directory: worker
+        run: |
+          sed -i '/^main = /d' wrangler.toml
+          sed -i '/^\[vars\]/,/^$/d' wrangler.toml
+
       - name: Deploy to Cloudflare Pages
         working-directory: worker
         run: wrangler pages deploy --project-name cf-manager --branch main --commit-dirty
