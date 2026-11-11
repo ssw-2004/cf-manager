@@ -34,7 +34,9 @@ export async function getRulesetId(account: Account, zoneId: string, phase: stri
   }
   const baseUrl = getRulesetBaseUrl(account, zoneId, phase);
   const accountLevel = isAccountLevelPhase(phase);
-  const list = await cfFetch<{ result: any[] }>(account, `${baseUrl}?per_page=100`, key);
+  // 注意：Cloudflare ruleset 列表接口的 per_page 上限是 50（用 100 会报 400
+  // "per_page cannot be greater than 50"），所以这里用 50。
+  const list = await cfFetch<{ result: any[] }>(account, `${baseUrl}?per_page=50`, key);
   const existing = (list.result || []).find((r) => r.phase === phase);
   if (existing) return existing.id;
   const created = await cfFetch<{ result: any }>(account, baseUrl, key, {
