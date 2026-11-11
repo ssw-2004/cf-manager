@@ -17,6 +17,10 @@
             <n-button size="small" @click="loadAccounts" :loading="loadingAccounts">{{ t('tunnels.refresh') }}</n-button>
           </n-space>
 
+          <n-alert v-if="loadTunnelsError" type="error" :bordered="false" style="margin-top: 8px">
+            {{ loadTunnelsError }}
+          </n-alert>
+
           <AutoFitTable
             :columns="tunnelColumns"
             :data="tunnels"
@@ -363,6 +367,7 @@ const accounts = ref<Array<{ id: number; name: string; account_id: string }>>([]
 const tunnels = ref<any[]>([]);
 const loadingAccounts = ref(false);
 const loadingTunnels = ref(false);
+const loadTunnelsError = ref('');
 
 const accountOptions = computed(() =>
   accounts.value.map((a) => ({ label: `${a.name} (${a.account_id})`, value: a.id }))
@@ -387,11 +392,14 @@ async function loadAccounts() {
 async function loadTunnels() {
   if (!selectedAccountId.value) { tunnels.value = []; return; }
   loadingTunnels.value = true;
+  loadTunnelsError.value = '';
   try {
     const { data } = await tunnelsApi.listTunnels(selectedAccountId.value);
     tunnels.value = data;
-  } catch {
+  } catch (e: any) {
     tunnels.value = [];
+    // Don't silently show an empty list — keep the error visible until the next load.
+    loadTunnelsError.value = e?.errorMessage || e?.message || '加载隧道列表失败';
   } finally {
     loadingTunnels.value = false;
   }
